@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta
+			name="viewport"
+			content="width=device-width,initial-scale=1,viewport-fit=cover"
+		/>
+		<meta name="theme-color" content="#10201a" />
+		<title>Check-in</title>
+		<style>
+			:root {
+				--bg: #10201a;
+				--card: #193027;
+				--card2: #21392f;
+				--line: #2c4a3d;
+				--text: #e9f1ec;
+				--mute: #93ab9f;
+				--pink: #f29bb8;
+				--gold: #e7c46a;
+				--green: #8fd3b0;
+			}
+			* {
+				box-sizing: border-box;
+				-webkit-tap-highlight-color: transparent;
+			}
+			body {
+				margin: 0;
+				background: var(--bg);
+				color: var(--text);
+				font:
+					16px/1.4 system-ui,
+					-apple-system,
+					"Segoe UI",
+					Roboto,
+					sans-serif;
+			}
+			#app {
+				max-width: 480px;
+				margin: 0 auto;
+				padding: 16px 16px 56px;
+				padding-top: max(16px, env(safe-area-inset-top));
+			}
+			header {
+				display: flex;
+				justify-content: space-between;
+				align-items: baseline;
+			}
+			h1 {
+				font-size: 1.3rem;
+				margin: 0;
+				font-weight: 600;
+			}
+			.sync {
+				font-size: 0.75rem;
+				color: var(--mute);
+				background: none;
+				border: 0;
+				font-family: inherit;
+				padding: 0;
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+			}
+			.sync-dot {
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				background: var(--mute);
+				display: inline-block;
+				transition: background 0.3s;
+				flex: none;
+			}
+			.sync-dot.saving {
+				background: var(--gold);
+			}
+			.sync-dot.saved {
+				background: var(--green);
+			}
+			.sync-dot.error {
+				background: var(--pink);
+			}
+			.sync.bad {
+				color: var(--pink);
+			}
+			.banner {
+				margin: 10px 0 0;
+				padding: 10px 12px;
+				border: 1px dashed var(--line);
+				border-radius: 10px;
+				font-size: 0.82rem;
+				color: var(--mute);
+			}
+			.tabs {
+				display: flex;
+				gap: 6px;
+				margin: 14px 0;
+				background: var(--card);
+				padding: 4px;
+				border-radius: 12px;
+			}
+			.tabs button {
+				flex: 1;
+				border: 0;
+				background: none;
+				color: var(--mute);
+				padding: 9px;
+				border-radius: 9px;
+				font: inherit;
+				font-weight: 500;
+			}
+			.tabs button.on {
+				background: var(--card2);
+				color: var(--pink);
+			}
+			.daynav {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin-bottom: 12px;
+			}
+			.daynav .t {
+				text-align: center;
+			}
+			.daynav .t b {
+				display: block;
+				font-size: 1.15rem;
+				font-weight: 600;
+			}
+			.daynav .t span {
+				font-size: 0.8rem;
+				color: var(--mute);
+			}
+			.arrow {
+				width: 40px;
+				height: 40px;
+				border-radius: 50%;
+				border: 1px solid var(--line);
+				background: none;
+				color: var(--text);
+				font-size: 1.2rem;
+				line-height: 1;
+			}
+			.arrow:disabled {
+				opacity: 0.25;
+			}
+			.link {
+				background: none;
+				border: 0;
+				color: var(--pink);
+				font: inherit;
+				font-size: 0.9rem;
+				padding: 8px 4px;
+			}
+			.center {
+				display: block;
+				margin: -4px auto 8px;
+			}
+			.row {
+				display: flex;
+				align-items: center;
+				gap: 14px;
+				width: 100%;
+				padding: 15px 14px;
+				margin-bottom: 8px;
+				background: var(--card);
+				border: 1px solid var(--line);
+				border-radius: 14px;
+				color: var(--text);
+				font: inherit;
+				text-align: left;
+			}
+			.row .name {
+				flex: 1;
+			}
+			.box {
+				width: 26px;
+				height: 26px;
+				border-radius: 50%;
+				border: 2px solid var(--c);
+				flex: none;
+				display: grid;
+				place-items: center;
+				color: #10201a;
+				font-weight: 700;
+				font-size: 15px;
+			}
+			.row.on {
+				background: var(--card2);
+				border-color: var(--c);
+			}
+			.row.on .box {
+				background: var(--c);
+			}
+			.x {
+				color: var(--mute);
+				padding: 2px 8px;
+				font-size: 1rem;
+			}
+			.x.sure {
+				color: var(--pink);
+				font-size: 0.8rem;
+			}
+			.empty {
+				color: var(--mute);
+				text-align: center;
+				margin: 28px 0;
+			}
+			.foot {
+				display: flex;
+				justify-content: space-between;
+				margin-top: 8px;
+			}
+			.addform {
+				display: flex;
+				gap: 8px;
+				align-items: center;
+				margin-top: 8px;
+			}
+			.addform input {
+				flex: 1;
+				min-width: 0;
+				padding: 12px;
+				border-radius: 12px;
+				border: 1px solid var(--line);
+				background: var(--card);
+				color: var(--text);
+				font: inherit;
+			}
+			.primary {
+				background: var(--pink);
+				color: #10201a;
+				border: 0;
+				border-radius: 12px;
+				padding: 12px 16px;
+				font: inherit;
+				font-weight: 600;
+			}
+			.month {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin-bottom: 10px;
+			}
+			.month b {
+				font-size: 1.1rem;
+				font-weight: 600;
+			}
+			.chips {
+				display: flex;
+				gap: 6px;
+				overflow-x: auto;
+				padding-bottom: 8px;
+				margin-bottom: 6px;
+			}
+			.chip {
+				flex: none;
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				padding: 6px 12px;
+				border-radius: 999px;
+				border: 1px solid var(--line);
+				background: none;
+				color: var(--text);
+				font: inherit;
+				font-size: 0.85rem;
+			}
+			.chip i {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: var(--c, var(--pink));
+			}
+			.chip.on {
+				background: var(--card2);
+				border-color: var(--c, var(--pink));
+			}
+			.grid {
+				display: grid;
+				grid-template-columns: repeat(7, 1fr);
+				gap: 4px;
+			}
+			.dow {
+				font-size: 0.7rem;
+				color: var(--mute);
+				text-align: center;
+				padding-bottom: 2px;
+			}
+			.day {
+				aspect-ratio: 1;
+				border-radius: 10px;
+				background: var(--card);
+				border: 1px solid transparent;
+				color: var(--text);
+				font: inherit;
+				font-size: 0.85rem;
+				padding: 5px 2px 3px;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: space-between;
+			}
+			.day.hit {
+				background: var(--c);
+				color: #10201a;
+				font-weight: 700;
+			}
+			.day.today {
+				border-color: var(--pink);
+			}
+			.day.blank {
+				visibility: hidden;
+			}
+			.day.future {
+				opacity: 0.3;
+			}
+			.dots {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 2px;
+				justify-content: center;
+				min-height: 7px;
+				padding: 0 2px;
+			}
+			.dot {
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				display: block;
+			}
+			.summary {
+				text-align: center;
+				color: var(--mute);
+				font-size: 0.85rem;
+				margin-top: 14px;
+			}
+			[hidden] {
+				display: none !important;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app">
+			<header>
+				<h1>Check-in</h1>
+				<button class="sync" id="sync" title="Sync status">
+					<span class="sync-dot" id="sync-dot"></span>
+					<span id="sync-label"></span>
+				</button>
+			</header>
+			<div id="banner"></div>
+			<nav class="tabs">
+				<button data-view="today" class="on">Today</button>
+				<button data-view="cal">Calendar</button>
+			</nav>
+			<main id="today"></main>
+			<main id="cal" hidden></main>
+		</div>
+
+		<script>
+			/* ---------- CONFIG ---------- */
+			// The sheet link is NOT stored in this file (the repo is public).
+			// It is pasted once in the app and kept in this device's localStorage.
+			let API_URL = "";
+			try {
+				API_URL = localStorage.getItem("ci_api_url") || "";
+			} catch (e) {}
+
+			const PALETTE = [
+				"#f29bb8",
+				"#8fd3b0",
+				"#e7c46a",
+				"#8ec5e8",
+				"#b9a3e3",
+				"#f09a7b",
+				"#b5c98a",
+				"#e08fcf",
+			];
+			let CONFIGURED = API_URL.indexOf("http") === 0;
+
+			/* ---------- helpers ---------- */
+			const $ = (id) => document.getElementById(id);
+			const pad = (n) => String(n).padStart(2, "0");
+			const ymd = (d) =>
+				d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+			const parse = (s) => {
+				const [y, m, d] = s.split("-").map(Number);
+				return new Date(y, m - 1, d);
+			};
+			const todayStr = () => ymd(new Date());
+			const esc = (s) =>
+				String(s).replace(
+					/[&<>"']/g,
+					(c) =>
+						({
+							"&": "&amp;",
+							"<": "&lt;",
+							">": "&gt;",
+							'"': "&quot;",
+							"'": "&#39;",
+						})[c],
+				);
+			const colorOf = (c) => PALETTE[(c.color || 0) % PALETTE.length];
+
+			/* ---------- state ---------- */
+			let cats = []; // [{name, color}]
+			let logs = new Set(); // "YYYY-MM-DD|category"
+			let queue = []; // pending ops not yet confirmed by the sheet
+			let rev = 0; // bumps on every local change (guards against stale refreshes)
+			let sel = todayStr(); // day shown in the Today view
+			let lastToday = sel;
+			let view = "today";
+			let editing = false,
+				adding = false,
+				pendingDel = -1;
+			let calMonth = new Date();
+			calMonth.setDate(1);
+			let filter = "all";
+
+			function loadCache() {
+				try {
+					const c = JSON.parse(localStorage.getItem("ci_state") || "null");
+					if (c) {
+						cats = c.cats || [];
+						logs = new Set(c.logs || []);
+					}
+					queue = JSON.parse(localStorage.getItem("ci_queue") || "[]");
+				} catch (e) {}
+			}
+			function saveCache() {
+				try {
+					localStorage.setItem(
+						"ci_state",
+						JSON.stringify({ cats: cats, logs: Array.from(logs) }),
+					);
+					localStorage.setItem("ci_queue", JSON.stringify(queue));
+				} catch (e) {}
+			}
+
+			/* ---------- ops (optimistic local change + queued sync) ---------- */
+			function applyOp(op) {
+				if (op.action === "set") {
+					const key = op.date + "|" + op.category;
+					if (op.on === "1") logs.add(key);
+					else logs.delete(key);
+				} else if (op.action === "addCategory") {
+					if (!cats.some((c) => c.name.toLowerCase() === op.name.toLowerCase()))
+						cats.push({ name: op.name, color: Number(op.color) || 0 });
+				} else if (op.action === "removeCategory") {
+					cats = cats.filter((c) => c.name !== op.name);
+				}
+			}
+			function doOp(op) {
+				applyOp(op);
+				rev++;
+				queue.push(op);
+				saveCache();
+				render();
+				flush();
+			}
+
+			/* ---------- sync ---------- */
+			let flushing = false;
+			function setSync(s) {
+				const el = $("sync");
+				const dot = $("sync-dot");
+				const label = $("sync-label");
+				el.className = "sync" + (s === "offline" ? " bad" : "");
+				const text =
+					{
+						ok: "Synced",
+						saving: "Saving…",
+						offline: "Offline – tap to retry",
+						local: "Not connected",
+						"": "",
+					}[s] || "";
+				label.textContent = text;
+				dot.className =
+					"sync-dot " +
+					(s === "saving"
+						? "saving"
+						: s === "ok"
+							? "saved"
+							: s === "offline"
+								? "error"
+								: "");
+				el.title = text || "Sync status";
+				el.dataset.state = s;
+			}
+			async function flush() {
+				if (!CONFIGURED) {
+					setSync("local");
+					return;
+				}
+				if (flushing || !queue.length) return;
+				flushing = true;
+				setSync("saving");
+				try {
+					while (queue.length) {
+						const res = await fetch(API_URL, {
+							method: "POST",
+							headers: { "Content-Type": "application/x-www-form-urlencoded" },
+							body: new URLSearchParams(queue[0]).toString(),
+						});
+						const j = await res.json();
+						if (!j.ok) throw new Error(j.error || "save failed");
+						queue.shift();
+						saveCache();
+					}
+					setSync("ok");
+				} catch (e) {
+					setSync("offline");
+				}
+				flushing = false;
+			}
+			async function refresh() {
+				if (!CONFIGURED) {
+					setSync("local");
+					return;
+				}
+				await flush();
+				if (queue.length) return; // never overwrite unsent local changes
+				const startRev = rev;
+				try {
+					const r = await fetch(API_URL);
+					const j = await r.json();
+					if (!j.ok) throw new Error(j.error);
+					if (rev !== startRev || queue.length) return; // user changed something mid-fetch
+					cats = j.categories;
+					logs = new Set(j.logs.map((l) => l.date + "|" + l.category));
+					saveCache();
+					render();
+					setSync("ok");
+				} catch (e) {
+					setSync("offline");
+				}
+			}
+
+			/* ---------- rendering ---------- */
+			function render() {
+				$("today").hidden = view !== "today";
+				$("cal").hidden = view !== "cal";
+				document
+					.querySelectorAll(".tabs button")
+					.forEach((b) => b.classList.toggle("on", b.dataset.view === view));
+				if (view === "today") renderToday();
+				else renderCal();
+			}
+
+			function renderToday() {
+				const isToday = sel === todayStr(),
+					d = parse(sel);
+				const title = isToday
+					? "Today"
+					: d.toLocaleDateString(undefined, { weekday: "long" });
+				const sub = d.toLocaleDateString(undefined, {
+					month: "long",
+					day: "numeric",
+					year: "numeric",
+				});
+				let h = `<div class="daynav">
+    <button class="arrow" data-act="prev" aria-label="Previous day">‹</button>
+    <div class="t"><b>${title}</b><span>${sub}</span></div>
+    <button class="arrow" data-act="next" aria-label="Next day" ${isToday ? "disabled" : ""}>›</button>
+  </div>`;
+				if (!isToday)
+					h += `<button class="link center" data-act="gotoday">Jump to today</button>`;
+				if (!cats.length)
+					h += `<p class="empty">No categories yet. Add your first one below.</p>`;
+				cats.forEach((c, i) => {
+					const on = logs.has(sel + "|" + c.name);
+					h += `<button class="row ${on ? "on" : ""}" style="--c:${colorOf(c)}" data-i="${i}">
+      <span class="box">${on ? "✓" : ""}</span><span class="name">${esc(c.name)}</span>
+      ${editing ? `<span class="x ${pendingDel === i ? "sure" : ""}" data-del="${i}" aria-label="Remove">${pendingDel === i ? "Tap again to remove" : "✕"}</span>` : ""}</button>`;
+				});
+				if (adding) {
+					h += `<div class="addform"><input id="newcat" maxlength="40" placeholder="New category" autocomplete="off" enterkeyhint="done">
+      <button type="button" class="primary" data-act="submitadd">Add</button><button type="button" class="link" data-act="canceladd">Cancel</button></div>`;
+				} else {
+					h += `<div class="foot"><button class="link" data-act="add">+ Add category</button>
+      ${cats.length ? `<button class="link" data-act="edit">${editing ? "Done" : "Edit categories"}</button>` : ""}</div>`;
+				}
+				if (editing && CONFIGURED && !adding)
+					h += `<div class="foot"><button class="link" data-act="clearurl">Change sheet link</button></div>`;
+				$("today").innerHTML = h;
+				if (adding) {
+					const n = $("newcat");
+					if (n) n.focus();
+				}
+			}
+
+			function renderCal() {
+				const y = calMonth.getFullYear(),
+					m = calMonth.getMonth();
+				const dim = new Date(y, m + 1, 0).getDate(),
+					start = new Date(y, m, 1).getDay();
+				const idx = new Map();
+				cats.forEach((c, i) => idx.set(c.name, i));
+				const byDay = {};
+				logs.forEach((k) => {
+					const p = k.indexOf("|"),
+						ds = k.slice(0, p),
+						cn = k.slice(p + 1);
+					if (!idx.has(cn)) return;
+					(byDay[ds] = byDay[ds] || []).push(idx.get(cn));
+				});
+				if (filter !== "all" && !idx.has(filter)) filter = "all";
+				const fi = filter === "all" ? -1 : idx.get(filter);
+				const now = new Date(),
+					isCurMonth = now.getFullYear() === y && now.getMonth() === m;
+				const label = calMonth.toLocaleDateString(undefined, {
+					month: "long",
+					year: "numeric",
+				});
+
+				let h = `<div class="month">
+    <button class="arrow" data-m="-1" aria-label="Previous month">‹</button><b>${label}</b>
+    <button class="arrow" data-m="1" aria-label="Next month" ${isCurMonth ? "disabled" : ""}>›</button></div>`;
+				h += `<div class="chips"><button class="chip ${filter === "all" ? "on" : ""}" data-f="all">All</button>`;
+				cats.forEach((c) => {
+					h += `<button class="chip ${filter === c.name ? "on" : ""}" style="--c:${colorOf(c)}" data-f="${esc(c.name)}"><i></i>${esc(c.name)}</button>`;
+				});
+				h += `</div><div class="grid">`;
+				["S", "M", "T", "W", "T", "F", "S"].forEach(
+					(d) => (h += `<div class="dow">${d}</div>`),
+				);
+				for (let i = 0; i < start; i++) h += `<div class="day blank"></div>`;
+				let count = 0;
+				const today = todayStr();
+				for (let day = 1; day <= dim; day++) {
+					const ds = y + "-" + pad(m + 1) + "-" + pad(day);
+					const list = (byDay[ds] || []).slice().sort((a, b) => a - b);
+					const future = ds > today;
+					let cls = "day",
+						style = "",
+						inner = "";
+					if (fi >= 0) {
+						if (list.includes(fi)) {
+							cls += " hit";
+							style = `--c:${colorOf(cats[fi])}`;
+							count++;
+						}
+						inner = `<span>${day}</span><span class="dots"></span>`;
+					} else {
+						if (list.length) count++;
+						inner = `<span>${day}</span><span class="dots">${list.map((i) => `<i class="dot" style="background:${colorOf(cats[i])}"></i>`).join("")}</span>`;
+					}
+					if (ds === today) cls += " today";
+					if (future) cls += " future";
+					h += `<button class="${cls}" style="${style}" data-day="${ds}" ${future ? "disabled" : ""}>${inner}</button>`;
+				}
+				h += `</div>`;
+				const what = fi >= 0 ? esc(filter) + " · " : "";
+				h += `<p class="summary">${what}${count} day${count === 1 ? "" : "s"} logged this month</p>`;
+				$("cal").innerHTML = h;
+			}
+
+			/* ---------- sheet link (kept out of the code) ---------- */
+			function renderBanner() {
+				if (CONFIGURED) {
+					$("banner").innerHTML = "";
+					return;
+				}
+				$("banner").innerHTML =
+					'<div class="banner"><p style="margin:0 0 8px">Not connected to a sheet yet. Paste your Apps Script web app link to sync. It is stored only on this device, never in the page code.</p>' +
+					'<div class="addform"><input id="apiurl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false">' +
+					'<button type="button" class="primary" data-act="saveurl">Connect</button></div></div>';
+			}
+			function saveUrl(raw) {
+				const u = (raw || "").trim();
+				if (u.indexOf("https://") !== 0) return;
+				try {
+					localStorage.setItem("ci_api_url", u);
+				} catch (e) {}
+				API_URL = u;
+				CONFIGURED = true;
+				renderBanner();
+				refresh(); // sends anything logged before connecting, then pulls the sheet
+			}
+			function clearUrl() {
+				try {
+					localStorage.removeItem("ci_api_url");
+				} catch (e) {}
+				API_URL = "";
+				CONFIGURED = false;
+				editing = false;
+				renderBanner();
+				setSync("local");
+				render();
+			}
+
+			/* ---------- events ---------- */
+			function shiftDay(n) {
+				const d = parse(sel);
+				d.setDate(d.getDate() + n);
+				const s = ymd(d);
+				if (s <= todayStr()) {
+					sel = s;
+					render();
+				}
+			}
+			function addCategory(raw) {
+				const name = raw.replace(/\|/g, " ").trim();
+				if (!name) return;
+				if (cats.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+					adding = false;
+					render();
+					return;
+				}
+				const color = cats.length
+					? (Math.max.apply(
+							null,
+							cats.map((c) => c.color || 0),
+						) +
+							1) %
+						PALETTE.length
+					: 0;
+				adding = false;
+				doOp({ action: "addCategory", name: name, color: String(color) });
+			}
+
+			document.addEventListener("click", (e) => {
+				const t = e.target;
+				const tab = t.closest("[data-view]");
+				if (tab) {
+					view = tab.dataset.view;
+					render();
+					return;
+				}
+				if (t.closest("#sync")) {
+					const st = $("sync").dataset.state;
+					if (st === "offline") refresh();
+					else if (st === "local" && $("apiurl")) $("apiurl").focus();
+					return;
+				}
+
+				const del = t.closest("[data-del]");
+				if (del) {
+					const di = Number(del.dataset.del),
+						c = cats[di];
+					if (!c) return;
+					// two-tap confirm (browser confirm() dialogs are blocked in some embedded previews)
+					if (pendingDel === di) {
+						pendingDel = -1;
+						doOp({ action: "removeCategory", name: c.name });
+					} else {
+						pendingDel = di;
+						render();
+					}
+					return;
+				}
+				const row = t.closest("[data-i]");
+				if (row && !editing) {
+					const c = cats[Number(row.dataset.i)];
+					const on = !logs.has(sel + "|" + c.name);
+					doOp({
+						action: "set",
+						date: sel,
+						category: c.name,
+						on: on ? "1" : "0",
+					});
+					return;
+				}
+				const day = t.closest("[data-day]");
+				if (day && !day.disabled) {
+					sel = day.dataset.day;
+					view = "today";
+					render();
+					window.scrollTo(0, 0);
+					return;
+				}
+				const f = t.closest("[data-f]");
+				if (f) {
+					filter = f.dataset.f;
+					render();
+					return;
+				}
+				const mo = t.closest("[data-m]");
+				if (mo && !mo.disabled) {
+					calMonth.setMonth(calMonth.getMonth() + Number(mo.dataset.m));
+					render();
+					return;
+				}
+
+				const act = t.closest("[data-act]");
+				if (!act || act.disabled) return;
+				switch (act.dataset.act) {
+					case "prev":
+						shiftDay(-1);
+						break;
+					case "next":
+						shiftDay(1);
+						break;
+					case "gotoday":
+						sel = todayStr();
+						render();
+						break;
+					case "add":
+						adding = true;
+						editing = false;
+						render();
+						break;
+					case "submitadd":
+						addCategory($("newcat") ? $("newcat").value : "");
+						break;
+					case "saveurl":
+						saveUrl($("apiurl") ? $("apiurl").value : "");
+						break;
+					case "clearurl":
+						clearUrl();
+						break;
+					case "canceladd":
+						adding = false;
+						render();
+						break;
+					case "edit":
+						editing = !editing;
+						pendingDel = -1;
+						render();
+						break;
+				}
+			});
+			document.addEventListener("keydown", (e) => {
+				if (e.key === "Enter" && e.target.id === "apiurl") {
+					e.preventDefault();
+					saveUrl(e.target.value);
+					return;
+				}
+				if (e.key === "Enter" && e.target.id === "newcat") {
+					e.preventDefault();
+					addCategory(e.target.value);
+				}
+			});
+			document.addEventListener("visibilitychange", () => {
+				if (document.visibilityState !== "visible") return;
+				if (lastToday !== todayStr()) {
+					if (sel === lastToday) sel = todayStr();
+					lastToday = todayStr();
+				}
+				render();
+				refresh();
+			});
+
+			/* ---------- start ---------- */
+			loadCache();
+			renderBanner();
+			render();
+			refresh();
+		</script>
+	</body>
+</html>
